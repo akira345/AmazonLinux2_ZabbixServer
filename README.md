@@ -1,0 +1,2 @@
+# AmazonLinux2_ZabbixServer
+AmazonLinux2でZabbixServerをインストールするAnsible
