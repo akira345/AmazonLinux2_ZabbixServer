@@ -1,0 +1,19 @@
+---
+- name: MySQLコミュニティより5.7のリポジトリを取得
+  yum:
+    name: "{{item}}"
+    state: present
+  with_items:
+    - http://dev.mysql.com/get/mysql57-community-release-el7-11.noarch.rpm
+
+- name: Install MySQL5.7 Server
+  yum:
+    name: "{{ item }}"
+    state: installed
+    enablerepo: mysql57-community
+  with_items:
+    - mysql
+    - mysql-server
+    - MySQL-python
+  notify:
+    - "start and enable mysql on boot"

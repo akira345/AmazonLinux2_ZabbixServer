@@ -1,0 +1,79 @@
+---
+- name: スロークエリログ格納用ディレクトリ作成
+  file:
+    path: /var/log/mysql/
+    state: directory
+    owner: mysql
+    group: mysql
+    mode: 0755
+  notify: "restart mysql"
+
+- set_fact:
+    mysql_log_file: /var/log/mysqld.log
+
+- name: 初回起動時か判定する為にログファイルの存在チェック
+  stat:
+    path: "{{ mysql_log_file }}"
+  register: log_file
+  changed_when: false
+
+- name: MySQL5.7起動
+  service:
+    name: mysqld
+    state: started
+    enabled: yes
+
+- name: 一時パスワード取得
+  shell: cat {{ mysql_log_file }} | grep 'temporary password'
+  register: temporary_password
+  changed_when: false
+  when: log_file.stat.size == 0
+
+- set_fact:
+    mysql_temp_password: "{{ temporary_password.stdout.split(' ')[-1] }}"
+  when: log_file.stat.size == 0
+
+- name: 一時的にパスワード変更
+  command: >
+    mysqladmin password '{{ mysql_temp_password }}' -u root -p'{{ mysql_temp_password }}'
+  changed_when: false
+  when: log_file.stat.size == 0
+
+- name: MySQLSecureInstallation実行
+  command: mysql_secure_installation -u root -p'{{ mysql_temp_password }}' -D
+  changed_when: false
+  when: log_file.stat.size == 0
+
+- name: PWポリシーを一時的に緩める
+  shell: |
+    mysql -u root -p'{{ mysql_temp_password }}' --connect-expired-password -e "SET GLOBAL validate_password_length=4;"
+    mysql -u root -p'{{ mysql_temp_password }}' --connect-expired-password -e "SET GLOBAL validate_password_policy=LOW;"
+  changed_when: false
+  when: log_file.stat.size == 0
+
+- name: MySQLのRootパスワード変更
+  command: >
+    mysqladmin password '{{ mysql_root_password }}' -u root -p'{{ mysql_temp_password }}'
+  changed_when: false
+  when: log_file.stat.size == 0
+
+- name: MySQL5.7設定展開(PWポリシー設定済み)
+  template: 
+    src: "my.cnf.j2"
+    dest: /etc/my.cnf
+    mode: 0644
+    owner: root
+    group: root
+  when: log_file.stat.size == 0
+
+- name: MySQL5.7再起動。設定を即時反映させるのでnoticsを使わない
+  service:
+    name: mysqld
+    state: restarted
+  when: log_file.stat.size == 0
+
+- name: スロークエリログパーミッション調整
+  file:
+    path: /var/log/mysql/slow.log
+    mode: 0644
+  notify: "restart mysql"

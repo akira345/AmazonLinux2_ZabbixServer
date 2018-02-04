@@ -1,0 +1,32 @@
+---
+# SSHユーザ作成
+
+#鍵認証の為PWは設定しない
+- name: ユーザ {{ resources.apache_user }} 作成
+  user:
+    name: "{{ resources.apache_user }}"
+    state: present
+
+- name: SSH鍵保存先ディレクトリ作成
+  file:
+    path: "/home/{{ resources.apache_user }}/.ssh"
+    state: directory
+    owner: "{{ resources.apache_user }}"
+    group: "{{ resources.apache_user }}"
+    mode: 0700
+
+- name: 公開鍵保存
+  copy:
+    src: "{{ inventory_dir }}/files/ssh/{{ resources.apache_user }}_id_rsa.pub"
+    dest: "/home/{{ resources.apache_user }}/.ssh/authorized_keys"
+    mode: 0600
+    owner: "{{ resources.apache_user }}"
+    group: "{{ resources.apache_user }}"
+
+- name: 秘密鍵保存
+  copy:
+    src: "{{ inventory_dir }}/files/ssh/{{ resources.apache_user }}_id_rsa"
+    dest: "/home/{{ resources.apache_user }}/.ssh/{{ resources.apache_user }}_id_rsa"
+    mode: 0600
+    owner: "{{ resources.apache_user }}"
+    group: "{{ resources.apache_user }}"

@@ -1,0 +1,33 @@
+- name: ドキュメントルートディレクトリ作成
+  file:
+    path: "{{ resources.document_root }}"
+    state: directory
+    owner: "{{ resources.apache_user }}"
+    group: "{{ resources.apache_user }}"
+
+- name: バーチャルホスト用設定展開
+  template: 
+    src: "{{ inventory_dir }}/templates/httpd/{{ resources.host_name }}.conf.j2"
+    dest: /etc/httpd/conf.d/{{ resources.host_name }}.conf
+    mode: 0644
+    owner: root
+    group: root
+  notify: "restart apache"
+
+- name: ログ出力先作成
+  file:
+    path: "/var/log/httpd/{{ resources.host_name }}"
+    state: directory
+    owner: root
+    group: root
+    mode: 0755
+
+- name: ログファイルローテーション設定展開
+  template: 
+    src: "syslog/host_log.conf.j2"
+    dest: "/etc/logrotate.d/{{ resources.host_name }}"
+    mode: 0644
+    owner: root
+    group: root
+  notify: "restart syslogd"
+

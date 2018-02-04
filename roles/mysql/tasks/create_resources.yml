@@ -1,0 +1,21 @@
+---
+# データベース作成
+- name: データベース作成
+  mysql_db:
+    name: "{{ resources.mysql_dbname }}"
+    state: present
+    encoding: "{{ resources.mysql_dbcharset }}"
+    collation: "{{ resources.mysql_dbcollation }}"
+    login_user: root
+    login_password: '{{ mysql_root_password }}'
+
+- name: データベースユーザ作成
+  mysql_user: 
+    name: "{{ resources.mysql_dbuser }}"
+    password: '{{ resources.mysql_dbpass }}'
+    priv: "{{ resources.mysql_dbname }}.*:ALL"
+    state: present
+    host: "%"
+    login_user: root
+    login_password: '{{ mysql_root_password }}'
+

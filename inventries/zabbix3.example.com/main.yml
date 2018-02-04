@@ -1,0 +1,16 @@
+---
+# 構築するサーバのタスクを設定します。
+
+- name: webserver
+  hosts: webserver
+  become: yes
+  vars_files:
+    - ./group_vars/sites.yml
+    - ../../group_vars/common_vars.yml
+  roles:
+    - ../../roles/common
+    - ../../roles/mysql
+    - ../../roles/web
+    - ../../roles/zabbix
+
+

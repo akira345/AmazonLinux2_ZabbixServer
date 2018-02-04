@@ -1,0 +1,49 @@
+---
+# ApacheやPHPなどをインストールするPlayBook
+- name: epel、PHP7.2のリポジトリ追加
+  yum:
+    name: "{{ item }}"
+    state: installed
+  with_items:
+    - https://dl.fedoraproject.org/pub/epel/epel-release-latest-7.noarch.rpm
+    - http://rpms.famillecollet.com/enterprise/remi-release-7.rpm
+
+- name: Install Apache2.4
+  yum:
+    name: "{{ item }}"
+    state: installed
+  with_items:
+    - httpd
+    - mod_ssl
+    - python-setuptools
+    - git
+    - python2-pip
+    - libpng
+    - libX11
+    - fontconfig-devel
+    - libxslt
+    - libXpm
+  notify:
+    - "start and enable apache on boot"
+
+- name: PHP7.2リポジトリ有効化
+  command: yum-config-manager --enable remi-php72
+  changed_when: false
+
+# Remiを優先するため、AmazonLinux2リポジトリを無効化してインストール
+- name: Install php7.2
+  yum:
+   name: "{{ item }}"
+   state: installed
+   disablerepo: amzn2-core
+  with_items:
+    - php
+    - php-gd
+    - php-mysqlnd
+    - php-mbstring
+    - php-xml
+    - php-opcache
+    - php-zip
+  notify:
+    - "start and enable apache on boot"
+

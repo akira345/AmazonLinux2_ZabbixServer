@@ -1,0 +1,30 @@
+---
+- name: Zabbixリポジトリ追加
+  yum:
+    name: "{{ item }}"
+    state: installed
+  with_items:
+    - "{{ zabbix_server_repo_uri }}"
+
+- name: zabbix_server,agentをインストール。依存関係の為Webは後
+  yum:
+    name: "{{ item }}"
+    state: installed
+  with_items:
+    - zabbix-server-mysql
+    - zabbix-agent
+  notify:
+    - "start and enable zabbix server on boot"
+
+- name: dejavu-sans-fontsインストール
+  yum:
+    name: dejavu-sans-fonts
+    state: installed
+
+# remiから入れるため、AmazonLinux2のコアリポジトリを無効化してインストールする。
+- name: zabbix-webをインストール
+  yum:
+    name: zabbix-web-mysql
+    state: installed
+    disablerepo: amzn2-core
+

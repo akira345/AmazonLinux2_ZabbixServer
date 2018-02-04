@@ -1,0 +1,11 @@
+---
+
+- include: install.yml
+- include: settings.yml
+
+# DBを複数作成する
+- include: create_resources.yml
+  with_items:
+    - "{{ mysql_databases }}"
+  loop_control:
+    loop_var: resources

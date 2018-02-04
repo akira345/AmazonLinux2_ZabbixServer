@@ -1,0 +1,58 @@
+---
+- name: インストール済みかチェック
+  stat:
+   path: /etc/zabbix/server_installed
+  register: server_installed
+  changed_when: false
+
+- name: スキーマ作成用SQLチェック
+  shell: ls -1 /usr/share/doc/zabbix-server-mysql*/create.sql.gz
+  changed_when: False
+  when: server_installed.stat.exists == False
+  register: sqlfile
+
+- name: Zabbixテーブル作成
+  mysql_db:
+    name: "{{ zabbix_dbname }}"
+    encoding: "{{ zabbix_dbcharset }}"
+    collation: "{{ zabbix_dbcollation }}"
+    state: import
+    target: "{{ sqlfile.stdout }}"
+    login_user: "{{ zabbix_dbuser }}"
+    login_password: "{{ zabbix_dbpass }}"
+    login_host: localhost
+  when: server_installed.stat.exists == False
+
+- name: インストール済みファイル作成
+  file:
+    path: /etc/zabbix/server_installed
+    state: touch
+  when: server_installed.stat.exists == False
+
+- name: ZabbixSevr設定展開
+  template: 
+    src: zabbix_server.conf.j2
+    dest: /etc/zabbix/zabbix_server.conf
+    mode: 0640
+    owner: root
+    group: zabbix
+  notify:
+    - "restart zabbix server"
+
+- name: Zabbixサーバ有効化＆自動起動設定
+  service:
+    name: zabbix-server
+    state: started
+    enabled: yes
+
+- name: zabbixWeb用のApache設定存在チェック
+  stat:
+    path: /etc/httpd/conf.d/zabbix.conf
+  register: zabbixweb_stat
+
+- name: zabbixWeb用のApache設定無効化(バーチャルホストで設定するため)
+  command: cp /dev/null /etc/httpd/conf.d/zabbix.conf
+  when: zabbixweb_stat.stat.size != 0
+  notify:
+      - "restart apache" 
+

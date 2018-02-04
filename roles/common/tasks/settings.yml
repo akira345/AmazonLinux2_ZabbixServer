@@ -1,0 +1,83 @@
+---
+# 初期設定
+
+- name: タイムゾーンをJSTにする
+  timezone:
+    name: Asia/Tokyo
+
+- name: タイムゾーンをJSTにするその２
+  template:
+    src: clock.j2
+    dest: /etc/sysconfig/clock
+    owner: root
+    group: root
+    mode: 0644
+
+- name: crondを再起動（タイムゾーン修正を反映させる）
+  service:
+    name: crond
+    state: restarted
+  changed_when: false
+  
+- name: ホスト名設定
+  hostname:
+    name: "{{ server_name }}"
+
+# スワップファイル設定
+- set_fact:
+    swap_file_path: /swap.img
+
+- name: スワップファイル存在チェック(遅いのでチェックサムを返さない)
+  stat:
+    path: "{{ swap_file_path }}"
+    get_checksum: no
+    get_md5: no
+  register: swapfile_exists
+
+# AmazonLinux2はXFSになって、fallocateが使えなくなったので、スワップをとりあえず8GB固定で作る
+- name: スワップファイル作成(8GB)
+  command: dd if=/dev/zero of={{ swap_file_path }} count=8388608 bs=1K
+  when: (not swapfile_exists.stat.exists)
+
+- name: スワップファイル権限設定
+  file:
+    path: "{{ swap_file_path }}"
+    mode: 0600
+  when: (not swapfile_exists.stat.exists)
+
+- name: スワップ作成
+  command: mkswap {{ swap_file_path }}
+  when: (not swapfile_exists.stat.exists)
+
+- name: スワップ有効化
+  command: swapon {{ swap_file_path }}
+  when: (not swapfile_exists.stat.exists)
+
+- name: スワップファイル永続化
+  mount:
+    name: swap
+    src: "{{ swap_file_path }}"
+    fstype: swap
+    opts: defaults
+    passno: '0'
+    dump: '0'
+    state: present
+
+- name: Hosts設定
+  template:
+    src: hosts.j2
+    dest: /etc/hosts
+    owner: root
+    group: root
+    mode: 0644
+
+- name: rsyslogインストール
+  yum:
+    name: rsyslog
+    state: installed
+
+- name: rsyslog有効化
+  service:
+    name: rsyslog
+    state: started
+    enabled: yes

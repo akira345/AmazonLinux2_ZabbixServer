@@ -1,0 +1,44 @@
+---
+
+# サーバのホスト名
+server_name: zabbix3.example.com
+
+# ZabbixServerが使用するMySQL情報。Zabbix3はutf8mb4に対応していないらしいので、
+# https://www.zabbix.com/download?zabbix=3.0&os_distribution=centos&os_version=7&db=MySQL
+# のとおりに設定します。
+
+zabbix_dbname: zabbix
+zabbix_dbuser: zabbix
+zabbix_dbpass: zabbix_db_pass
+zabbix_dbcharset: utf8
+zabbix_dbcollation: utf8_bin
+
+# MySQLのデータベース情報
+
+mysql_root_password: Do_you_love_MySQL57?  # MySQLのRootパスワード
+
+# MySQLロールは複数DB作成に対応しているので、配列に設定
+mysql_databases:
+  - mysql_dbname: "{{ zabbix_dbname }}"
+    mysql_dbuser: "{{ zabbix_dbuser }}"
+    mysql_dbpass: "{{ zabbix_dbpass }}"
+    mysql_dbcharset: "{{ zabbix_dbcharset }}"
+    mysql_dbcollation: "{{ zabbix_dbcollation }}"
+
+# Webサーバ設定情報
+# Webロールは複数サイトに対応しているので、配列に設定。
+# DocumentRootはルートにアクセスされた時のパスです。
+# SSLへリダイレクトする.htaccessを配置したりします。
+# SSH接続用ユーザ作成も兼ねています。
+# SSH鍵はfiles/sshへ
+# SSL証明書はfiles/sslへそれぞれ配置すれば反映されます。
+
+webservers:
+  - host_name: zabbix3.example.com
+    hostname_alias: zabbix3.example.com
+    document_root: /home/webmaster/html
+    apache_user: webmaster
+    ssl: True  # 証明書をコピーする場合True
+
+#######################################################
+

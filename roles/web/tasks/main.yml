@@ -1,0 +1,23 @@
+---
+- include: install_httpd.yml
+
+- include: create_user.yml
+  with_items:
+    - "{{ webservers }}"
+  loop_control:
+    loop_var: resources
+
+- include: ssl.yml
+  with_items:
+    - "{{ webservers }}"
+  loop_control:
+    loop_var: resources
+
+- include: settings.yml
+
+- include: create_resources.yml
+  with_items:
+    - "{{ webservers }}"
+  loop_control:
+    loop_var: resources
+

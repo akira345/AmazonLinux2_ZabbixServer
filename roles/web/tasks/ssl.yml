@@ -1,0 +1,26 @@
+---
+# SSL証明書設定
+
+ - name: CAファイルコピー
+   copy:
+     src: "{{ inventory_dir }}/files/ssl/{{ resources.host_name }}.ca"
+     dest: "/etc/pki/tls/certs/{{ resources.host_name }}.ca"
+   notify:
+     - "restart apache" 
+   when: "{{ resources.ssl }}"
+
+ - name: 証明書コピー
+   copy:
+     src: "{{ inventory_dir }}/files/ssl/{{ resources.host_name }}.crt"
+     dest: "/etc/pki/tls/certs/{{ resources.host_name }}.crt"
+   notify:
+     - "restart apache" 
+   when: "{{ resources.ssl }}"
+
+ - name: 秘密鍵コピー
+   copy:
+     src: "{{ inventory_dir }}/files/ssl/{{ resources.host_name }}.key"
+     dest: "/etc/pki/tls/private/{{ resources.host_name }}.key"
+   notify:
+     - "restart apache" 
+   when: "{{ resources.ssl }}"
