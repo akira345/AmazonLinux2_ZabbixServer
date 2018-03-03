@@ -13,6 +13,16 @@
     group: root
     mode: 0644
 
+- name: CRONでメール送信を停止する
+  cron:
+    name: MAILTO
+    minute: MAILTO=""
+    hour: ""
+    day: ""
+    month: ""
+    weekday: ""
+    job: ""
+
 - name: crondを再起動（タイムゾーン修正を反映させる）
   service:
     name: crond
